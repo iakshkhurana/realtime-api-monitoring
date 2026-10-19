@@ -139,10 +139,10 @@ api:http_request_duration_seconds:p95_1m = histogram_quantile(0.95, sum by (le) 
 
 Run with `promtool test rules`. Cover at least these cases:
 
-- [ ] APIDown is not firing at 20s and is firing at 50s after `up` drops to 0.
-- [ ] An error ratio of 20% fires APIHighErrorRate.
-- [ ] Traffic with 100% `200` responses does **not** fire APIHighErrorRate.
-- [ ] When every request falls in the `(0.5, 1]` bucket, APIHighLatencyP95 fires (p95 = 975ms).
+- [x] APIDown is not firing at 20s and is firing at 50s after `up` drops to 0.
+- [x] An error ratio of 20% fires APIHighErrorRate.
+- [x] Traffic with 100% `200` responses does **not** fire APIHighErrorRate.
+- [x] When every request falls in the `(0.5, 1]` bucket, APIHighLatencyP95 fires (p95 = 975ms).
 
 ---
 
@@ -217,16 +217,18 @@ Check the chaos mix: about 13% of requests are slow, which is more than the 5% n
 
 ## 8. Acceptance criteria
 
-- [ ] `docker compose up -d --build` starts all 5 services from a clean clone.
-- [ ] `curl localhost:3000/metrics | grep -c '^# TYPE'` returns **20 or more**.
-- [ ] All Prometheus targets (http://localhost:9090/targets) are `UP`.
-- [ ] Grafana opens on the API Overview dashboard with every panel showing data. No clicking or importing is needed.
-- [ ] `make smoke` and `make load` pass, and no alerts fire during `load`.
-- [ ] During `make chaos`, both alerts go from pending to firing in Prometheus and show up in Alertmanager (http://localhost:9093).
-- [ ] Slack receives the firing message and, after the test ends, the resolved message.
-- [ ] `promtool test rules` passes and `promtool check config` / `amtool check-config` are clean.
-- [ ] No secrets are committed (`.env` is gitignored).
-- [ ] Take screenshots for the README: the dashboard under load, the alert firing in Slack, and the Prometheus alerts page.
+Status as of the first real run (2026-10-19, Docker Desktop on Linux):
+
+- [x] `docker compose up -d --build` starts all 5 services from a clean clone.
+- [x] `curl localhost:3000/metrics | grep -c '^# TYPE'` returns **20 or more**. *(36)*
+- [x] All Prometheus targets (http://localhost:9090/targets) are `UP`.
+- [ ] Grafana opens on the API Overview dashboard with every panel showing data. No clicking or importing is needed. *(partly: dashboard opens as home and all API/Node.js panels show data; the Containers row is empty on Docker Desktop because of the cAdvisor containerd-store limitation, see README)*
+- [ ] `make smoke` and `make load` pass, and no alerts fire during `load`. *(smoke: 15/15 passed; `load` not run yet)*
+- [x] During `make chaos`, both alerts go from pending to firing in Prometheus and show up in Alertmanager (http://localhost:9093). *(fired ~70s in, resolved ~90s after the run was stopped)*
+- [ ] Slack receives the firing message and, after the test ends, the resolved message. *(Alertmanager attempted both firing and resolved delivery to the slack receivers; not verified against a real webhook yet)*
+- [x] `promtool test rules` passes and `promtool check config` / `amtool check-config` are clean.
+- [x] No secrets are committed (`.env` is gitignored).
+- [ ] Take screenshots for the README: the dashboard under load, the alert firing in Slack, and the Prometheus alerts page. *(not done)*
 
 ---
 

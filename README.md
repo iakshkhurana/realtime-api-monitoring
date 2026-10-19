@@ -2,7 +2,7 @@
 
 A Dockerized Node.js (TypeScript) REST API with a full monitoring stack: **Prometheus** metrics, **Grafana** dashboards, **Alertmanager** alerts sent to **Slack**, container metrics from **cAdvisor**, and **k6** load tests to check that the alerts fire.
 
-The build spec is in [docs/requirements.md](docs/requirements.md), and a step-by-step log of how the project was built is in [docs/build-log.md](docs/build-log.md).
+The build spec is in [docs/requirements.md](docs/requirements.md), a step-by-step log of how the project was built is in [docs/build-log.md](docs/build-log.md), and [docs/interview-checklist.md](docs/interview-checklist.md) has the questions you should be able to answer about it.
 
 Dashboards, data sources and alert rules are all provisioned as code, so the whole stack starts with one command:
 
