@@ -1,8 +1,8 @@
 # Real-Time API Monitoring Stack
 
-A Dockerized Node.js REST API with a full monitoring stack: **Prometheus** metrics, **Grafana** dashboards, **Alertmanager** alerts sent to **Slack**, container metrics from **cAdvisor**, and **k6** load tests to check that the alerts fire.
+A Dockerized Node.js (TypeScript) REST API with a full monitoring stack: **Prometheus** metrics, **Grafana** dashboards, **Alertmanager** alerts sent to **Slack**, container metrics from **cAdvisor**, and **k6** load tests to check that the alerts fire.
 
-The full build spec, including acceptance criteria and build order, is in [docs/requirements.md](docs/requirements.md).
+The build spec is in [docs/requirements.md](docs/requirements.md), and a step-by-step log of how the project was built is in [docs/build-log.md](docs/build-log.md).
 
 Dashboards, data sources and alert rules are all provisioned as code, so the whole stack starts with one command:
 
@@ -31,16 +31,17 @@ docker compose up -d --build
 ├── docker-compose.yml          # The whole stack
 ├── Makefile                    # Shortcuts: up, down, load, chaos, test-rules, ...
 ├── .env.example                # Slack webhook and Grafana credentials
-├── api/                        # Monitored Node.js service
-│   ├── Dockerfile
+├── api/                        # Monitored Node.js service (TypeScript)
+│   ├── Dockerfile              # Multi-stage: tsc build, then prod-only runtime
+│   ├── tsconfig.json
 │   └── src/
-│       ├── server.js           # HTTP server and graceful shutdown
-│       ├── app.js              # Express app, /health and /metrics
-│       ├── metrics.js          # Prometheus registry and metric definitions
-│       ├── middleware/metrics.js   # Records rate, latency, in-flight and size per route
+│       ├── server.ts           # HTTP server and graceful shutdown
+│       ├── app.ts              # Express app, /health and /metrics
+│       ├── metrics.ts          # Prometheus registry and metric definitions
+│       ├── middleware/metrics.ts   # Records rate, latency and in-flight per route
 │       └── routes/
-│           ├── items.js        # CRUD endpoints
-│           └── chaos.js        # Slow, failing and CPU-heavy endpoints for testing alerts
+│           ├── items.ts        # CRUD endpoints
+│           └── chaos.ts        # Slow, failing and CPU-heavy endpoints for testing alerts
 ├── prometheus/
 │   ├── prometheus.yml          # Scrape targets and Alertmanager wiring
 │   ├── rules/
@@ -62,7 +63,7 @@ docker compose up -d --build
 
 ## Getting started
 
-Requirements: Docker with the Compose plugin. `make` is optional; every target is a plain `docker compose` command.
+Requirements: Docker with the Compose plugin. `make` is optional; every target is a plain `docker compose` command. Node.js is only needed to run the API outside Docker (`cd api && npm install && npm run dev`).
 
 ```bash
 cp .env.example .env        # add your Slack incoming-webhook URL
@@ -84,9 +85,8 @@ The API exposes more than 30 metrics at `GET /metrics`.
 | `http_requests_total`           | Counter   | `method`, `route`, `status_code`|
 | `http_request_duration_seconds` | Histogram | `method`, `route`, `status_code`|
 | `http_requests_in_flight`       | Gauge     |                                 |
-| `http_response_size_bytes`      | Histogram | `method`, `route`               |
 
-**Application (custom)**: `app_errors_total`, `app_items_in_store`, `app_item_operations_total`
+**Application (custom)**: `app_errors_total` (by error type), `app_items_in_store`
 
 **Runtime (prom-client defaults)**: process CPU (user/system), resident and virtual memory, heap used/total/per-space, external memory, GC duration, event loop lag (mean/p50/p90/p99), active handles and requests, open file descriptors, Node.js version.
 

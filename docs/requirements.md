@@ -2,7 +2,7 @@
 
 This document says what to build, how each part should behave, and how to check that it's done. The README describes the finished project.
 
-**Stack:** Node.js (Express + prom-client), Docker Compose, Prometheus, Grafana, Alertmanager, cAdvisor, k6
+**Stack:** Node.js + TypeScript (Express + prom-client), Docker Compose, Prometheus, Grafana, Alertmanager, cAdvisor, k6
 
 **Resume claims this project must back up:**
 
@@ -25,14 +25,15 @@ This document says what to build, how each part should behave, and how to check 
 │   ├── Dockerfile
 │   ├── .dockerignore
 │   ├── package.json
+│   ├── tsconfig.json
 │   └── src/
-│       ├── server.js             # listen + graceful shutdown
-│       ├── app.js                # express app, /health, /metrics, error handler
-│       ├── metrics.js            # registry + all metric definitions
-│       ├── middleware/metrics.js # per-request instrumentation
+│       ├── server.ts             # listen + graceful shutdown
+│       ├── app.ts                # express app, /health, /metrics, error handler
+│       ├── metrics.ts            # registry + all metric definitions
+│       ├── middleware/metrics.ts # per-request instrumentation
 │       └── routes/
-│           ├── items.js          # CRUD
-│           └── chaos.js          # slow / flaky / cpu endpoints
+│           ├── items.ts          # CRUD
+│           └── chaos.ts          # slow / flaky / cpu endpoints
 ├── prometheus/
 │   ├── prometheus.yml
 │   ├── rules/recording.yml
@@ -86,10 +87,8 @@ Custom metrics:
 | `http_requests_total` | Counter | method, route, status_code | |
 | `http_request_duration_seconds` | Histogram | method, route, status_code | Buckets: `.005 .01 .025 .05 .1 .25 .5 1 2.5 5`. The 0.5 bucket must exist because the alert threshold is 500ms. |
 | `http_requests_in_flight` | Gauge | — | inc on request, dec on `finish` |
-| `http_response_size_bytes` | Histogram | method, route | From the `content-length` header |
 | `app_errors_total` | Counter | type | |
 | `app_items_in_store` | Gauge | — | |
-| `app_item_operations_total` | Counter | operation | list/get/create/delete |
 
 ### 2.3 Instrumentation middleware rules
 
@@ -100,7 +99,7 @@ Custom metrics:
 
 ### 2.4 Container
 
-- Base image `node:20-alpine`, `npm install --omit=dev`, run as `USER node`, `EXPOSE 3000`.
+- Multi-stage `node:20-alpine` Dockerfile: compile with `tsc` in the first stage, copy `dist/` into a runtime stage with `npm install --omit=dev`, run as `USER node`, `EXPOSE 3000`.
 - `HEALTHCHECK` using `wget -qO- http://localhost:3000/health`.
 - In Compose, set limits of `cpus: 1.0` and `memory: 256M`. Without a memory limit, the memory-percentage alert has nothing to divide by.
 
@@ -233,7 +232,7 @@ Check the chaos mix: about 13% of requests are slow, which is more than the 5% n
 
 ## 9. Suggested build order
 
-1. **API**: endpoints and the `/metrics` middleware, run locally with `node src/server.js`. Check that the route labels look right.
+1. **API**: endpoints and the `/metrics` middleware, run locally with `npm run dev`. Check that the route labels look right.
 2. **Dockerize the API** and add a minimal `docker-compose.yml`.
 3. **Prometheus**: add the service and the scrape config, and confirm the target is UP.
 4. **cAdvisor**: add the service and confirm the container metrics have compose labels.
