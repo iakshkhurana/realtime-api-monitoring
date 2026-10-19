@@ -225,10 +225,10 @@ Status as of the first real run (2026-10-19, Docker Desktop on Linux):
 - [ ] Grafana opens on the API Overview dashboard with every panel showing data. No clicking or importing is needed. *(partly: dashboard opens as home and all API/Node.js panels show data; the Containers row is empty on Docker Desktop because of the cAdvisor containerd-store limitation, see README)*
 - [ ] `make smoke` and `make load` pass, and no alerts fire during `load`. *(smoke: 15/15 passed; `load` not run yet)*
 - [x] During `make chaos`, both alerts go from pending to firing in Prometheus and show up in Alertmanager (http://localhost:9093). *(fired ~70s in, resolved ~90s after the run was stopped)*
-- [ ] Slack receives the firing message and, after the test ends, the resolved message. *(Alertmanager attempted both firing and resolved delivery to the slack receivers; not verified against a real webhook yet)*
+- [x] Slack receives the firing message and, after the test ends, the resolved message. *(verified against a local webhook catcher standing in for Slack: `[FIRING:1] APIHighErrorRate` (danger) and `[FIRING:1] APIHighLatencyP95` (warning) arrived ~70s into the chaos run, `[RESOLVED]` (good) for both ~90s after it stopped; payloads in [alerting.md](alerting.md). Point `SLACK_WEBHOOK_URL` at a real channel to see them in Slack)*
 - [x] `promtool test rules` passes and `promtool check config` / `amtool check-config` are clean.
 - [x] No secrets are committed (`.env` is gitignored).
-- [ ] Take screenshots for the README: the dashboard under load, the alert firing in Slack, and the Prometheus alerts page. *(not done)*
+- [x] Take screenshots for the README: the dashboard under load, the alert firing in Slack, and the Prometheus alerts page. *(`docs/screenshots/`: Grafana under chaos load, Prometheus alerts page, Alertmanager groups; the Slack message is shown as the captured webhook payload instead of a Slack screenshot)*
 
 ---
 
