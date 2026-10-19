@@ -91,6 +91,17 @@ services:
       - prometheus
     restart: unless-stopped
 
+  # Load generator. Not started by `docker compose up`; run with make load / make chaos.
+  k6:
+    image: grafana/k6:0.54.0
+    profiles: ["loadtest"]
+    environment:
+      BASE_URL: http://api:3000
+    volumes:
+      - ./k6:/scripts:ro
+    depends_on:
+      - api
+
 volumes:
   prometheus-data:
   alertmanager-data:
