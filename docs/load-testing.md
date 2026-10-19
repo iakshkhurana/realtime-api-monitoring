@@ -22,6 +22,10 @@ Without `make`: `docker compose run --rm k6 run /scripts/<name>.js`.
 
 About 13 % of chaos requests are ~900 ms; p95 only needs more than 5 % of requests above the threshold to cross it. Roughly 20 % of requests return 500, above the 5 % error threshold. With `for: 1m` on the rules plus `group_wait: 10s`, Slack gets the message about 70 s into the run.
 
+## Load run result
+
+`make load` on the first real run: 69,020 requests over 5m30s at up to 50 VUs, 0 failed, p95 = 1.45 ms (threshold 500 ms), 17,255 full CRUD iterations. No alerts fired.
+
 ## What a chaos run looks like
 
 Measured on the first real run:

@@ -223,7 +223,7 @@ Status as of the first real run (2026-10-19, Docker Desktop on Linux):
 - [x] `curl localhost:3000/metrics | grep -c '^# TYPE'` returns **20 or more**. *(36)*
 - [x] All Prometheus targets (http://localhost:9090/targets) are `UP`.
 - [ ] Grafana opens on the API Overview dashboard with every panel showing data. No clicking or importing is needed. *(partly: dashboard opens as home and all API/Node.js panels show data; the Containers row is empty on Docker Desktop because of the cAdvisor containerd-store limitation, see README)*
-- [ ] `make smoke` and `make load` pass, and no alerts fire during `load`. *(smoke: 15/15 passed; `load` not run yet)*
+- [x] `make smoke` and `make load` pass, and no alerts fire during `load`. *(smoke: 15/15 checks; load: 69,020 requests over 5m30s at up to 50 VUs, 0 failed, p95 = 1.45 ms, all thresholds passed, no alerts fired)*
 - [x] During `make chaos`, both alerts go from pending to firing in Prometheus and show up in Alertmanager (http://localhost:9093). *(fired ~70s in, resolved ~90s after the run was stopped)*
 - [x] Slack receives the firing message and, after the test ends, the resolved message. *(verified against a local webhook catcher standing in for Slack: `[FIRING:1] APIHighErrorRate` (danger) and `[FIRING:1] APIHighLatencyP95` (warning) arrived ~70s into the chaos run, `[RESOLVED]` (good) for both ~90s after it stopped; payloads in [alerting.md](alerting.md). Point `SLACK_WEBHOOK_URL` at a real channel to see them in Slack)*
 - [x] `promtool test rules` passes and `promtool check config` / `amtool check-config` are clean.
