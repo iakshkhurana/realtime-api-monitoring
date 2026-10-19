@@ -12,15 +12,9 @@ docker compose up -d --build
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    k6[k6 load tests] -->|HTTP traffic| api[Node.js API<br/>prom-client]
-    api -->|/metrics| prom[Prometheus]
-    cadvisor[cAdvisor<br/>container CPU / memory] --> prom
-    prom -->|alert rules| am[Alertmanager]
-    am -->|webhook| slack[Slack]
-    prom --> grafana[Grafana dashboards]
-```
+![Architecture of the real-time API monitoring stack](docs/architecture.png)
+
+> Editable source: [docs/architecture.excalidraw](docs/architecture.excalidraw). Open it at [excalidraw.com](https://excalidraw.com) with File → Open.
 
 | Service      | URL                          | Purpose                                     |
 |--------------|------------------------------|---------------------------------------------|
