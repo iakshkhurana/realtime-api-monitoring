@@ -1,0 +1,43 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: slack-warnings
+  group_by: [alertname, severity]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 1h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: slack-critical
+      repeat_interval: 15m
+
+# Don't send the warning version of an alert while the same alert is critical.
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: [alertname]
+
+receivers:
+  - name: slack-critical
+    slack_configs:
+      # Written from $SLACK_WEBHOOK_URL by entrypoint.sh at container start.
+      - api_url_file: /tmp/slack_webhook_url
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+
+  - name: slack-warnings
+    slack_configs:
+      - api_url_file: /tmp/slack_webhook_url
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+
+templates:
+  - /etc/alertmanager/templates/*.tmpl

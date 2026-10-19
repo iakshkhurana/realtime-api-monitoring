@@ -1,0 +1,74 @@
+# Unit tests for the alert rules. Run with: make test-rules
+rule_files:
+  - ../rules/recording.yml
+  - ../rules/alerts.yml
+
+evaluation_interval: 5s
+
+tests:
+  - name: APIDown fires 30s after the scrape fails
+    interval: 5s
+    input_series:
+      - series: 'up{job="api", instance="api:3000"}'
+        values: "1 1 0x10"
+    alert_rule_test:
+      - eval_time: 20s
+        alertname: APIDown
+        exp_alerts: []
+      - eval_time: 50s
+        alertname: APIDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: api
+              instance: api:3000
+            exp_annotations:
+              summary: "API is down"
+              description: "Prometheus has not been able to scrape api:3000 for more than 30 seconds."
+
+  - name: APIHighErrorRate fires at a 20% 5xx ratio
+    interval: 5s
+    input_series:
+      # 10 req/s total, 2 req/s of them 500s
+      - series: 'http_requests_total{job="api", method="GET", route="/api/items", status_code="200"}'
+        values: "0+40x60"
+      - series: 'http_requests_total{job="api", method="GET", route="/api/chaos/flaky", status_code="500"}'
+        values: "0+10x60"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: APIHighErrorRate
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "API 5xx error rate is above 5%"
+              description: "20% of requests have failed with a 5xx over the last minute."
+
+  - name: APIHighErrorRate stays quiet on healthy traffic
+    interval: 5s
+    input_series:
+      - series: 'http_requests_total{job="api", method="GET", route="/api/items", status_code="200"}'
+        values: "0+50x60"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: APIHighErrorRate
+        exp_alerts: []
+
+  - name: APIHighLatencyP95 fires when every request lands in the 0.5-1s bucket
+    interval: 5s
+    input_series:
+      - series: 'http_request_duration_seconds_bucket{job="api", le="0.5"}'
+        values: "0x60"
+      - series: 'http_request_duration_seconds_bucket{job="api", le="1"}'
+        values: "0+10x60"
+      - series: 'http_request_duration_seconds_bucket{job="api", le="+Inf"}'
+        values: "0+10x60"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: APIHighLatencyP95
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "API p95 latency is above 500ms"
+              description: "p95 latency has been 975ms for more than 1 minute."

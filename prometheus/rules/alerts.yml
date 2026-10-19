@@ -1,0 +1,53 @@
+groups:
+  - name: api-alerts
+    rules:
+      - alert: APIDown
+        expr: up{job="api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "API is down"
+          description: "Prometheus has not been able to scrape {{ $labels.instance }} for more than 30 seconds."
+
+      - alert: APIHighLatencyP95
+        expr: api:http_request_duration_seconds:p95_1m > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API p95 latency is above 500ms"
+          description: "p95 latency has been {{ $value | humanizeDuration }} for more than 1 minute."
+
+      # The rate guard stops one failed request during idle time from paging.
+      - alert: APIHighErrorRate
+        expr: api:http_errors:ratio_rate1m > 0.05 and api:http_requests:rate1m > 0.5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API 5xx error rate is above 5%"
+          description: "{{ $value | humanizePercentage }} of requests have failed with a 5xx over the last minute."
+
+      - alert: APIContainerHighCPU
+        expr: |
+          sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service="api"}[1m])) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API container CPU usage is high"
+          description: "The API container has used {{ $value | humanizePercentage }} of one CPU core for more than 2 minutes."
+
+      - alert: APIContainerHighMemory
+        expr: |
+          sum(container_memory_working_set_bytes{container_label_com_docker_compose_service="api"})
+          /
+          sum(container_spec_memory_limit_bytes{container_label_com_docker_compose_service="api"} > 0)
+          > 0.85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API container memory usage is high"
+          description: "The API container is using {{ $value | humanizePercentage }} of its memory limit."
