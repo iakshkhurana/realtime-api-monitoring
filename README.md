@@ -158,5 +158,7 @@ make check-config   # promtool check config + amtool check-config
 
 ## Notes
 
-- cAdvisor needs access to the Docker host's `/sys`, `/var/lib/docker` and `/dev/kmsg`. It works on Linux. On Docker Desktop (macOS/Windows), the container panels may be partly empty.
+- cAdvisor needs access to the Docker host's `/sys`, `/var/lib/docker` and `/dev/kmsg`, so it works on a Linux Docker Engine install (overlay2 storage driver).
+- **Docker Desktop:** with the *containerd image store* enabled (the default in recent versions), cAdvisor can't resolve container layers (`failed to identify the read-write layer ID`) and the container panels/alerts stay empty. Everything else works. To get container metrics on Desktop, turn off *Settings → General → Use containerd for pulling and storing images*, or run on a plain Docker Engine host.
+- **Docker Desktop on Linux** only bind-mounts paths under its shared directories (`/home` by default). If the repo lives elsewhere (e.g. an external drive under `/run/media`), add that path in *Settings → Resources → File sharing* or the config mounts will come up empty.
 - `make clean` removes the Prometheus, Alertmanager and Grafana volumes.

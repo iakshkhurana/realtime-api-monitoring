@@ -6,7 +6,10 @@ const EXCLUDED = new Set(['/metrics', '/health']);
 // Label by route template (/api/items/:id), never the raw URL, so the number
 // of label combinations stays small no matter how many items exist.
 function routeLabel(req: Request): string {
-  return req.route ? `${req.baseUrl}${req.route.path}` : 'unmatched';
+  if (!req.route) return 'unmatched';
+  // A router's root path is "/", which would give "/api/items/" for the list route.
+  const path = req.route.path === '/' ? '' : req.route.path;
+  return `${req.baseUrl}${path}` || '/';
 }
 
 export function metricsMiddleware(req: Request, res: Response, next: NextFunction): void {

@@ -154,6 +154,31 @@ Then look at http://localhost:9090/alerts (pending → firing) and http://localh
 
 ---
 
+## First real run
+
+**Commit:** `fix: route label trailing slash, Docker Desktop notes`
+
+Started the stack with Docker Desktop on Linux and checked every layer:
+
+| Check | Result |
+|---|---|
+| `docker compose up -d --build` | TypeScript compiled in the build stage, all 5 containers up, API healthy |
+| `GET /metrics` | 36 metric families |
+| Prometheus targets | `api`, `cadvisor`, `prometheus` all UP; 8 rules loaded and healthy; Alertmanager discovered |
+| Grafana | datasource `prometheus` provisioned, *API Overview* in folder *API Monitoring*, set as home, PromQL proxy query works |
+| `promtool test rules` | SUCCESS (4 cases) |
+| `promtool check config` / `amtool check-config` | SUCCESS |
+| k6 smoke | 15/15 checks |
+
+Two things came out of it:
+
+- **Route label had a trailing slash.** The list route is `router.get('/')`, so `req.baseUrl + req.route.path` gave `/api/items/`. Fixed by treating a route path of `/` as empty.
+- **cAdvisor on Docker Desktop returns no per-container series.** Logs show `failed to identify the read-write layer ID ... /var/lib/docker/image/overlayfs/layerdb/...`. Docker Desktop stores images with containerd, and cAdvisor's Docker handler still looks for the classic overlay2 layer database. Tried `--enable_metrics=cpu,memory,network` and cAdvisor v0.52.1: same error, the lookup is unconditional. It's an upstream limitation, not a config problem; on a Linux Docker Engine host (overlay2) it works. Documented in the README with the Desktop setting that turns the containerd store off.
+
+Also hit Docker Desktop's file-sharing rule: bind mounts from a path outside its shared directories come up empty. Ran the test from a clone under `/home`.
+
+---
+
 ## Things that went wrong along the way
 
 - **Route label lost its prefix on errors.** Fixed by responding from inside the router instead of `next(err)` (step 2).
